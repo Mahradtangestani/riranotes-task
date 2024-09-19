@@ -37,7 +37,7 @@ const TodoApp = () => {
                 id: todos.length + 1,
                 text: inputText,
                 description: inputDescription,
-                createdAt: new Date(),
+                createdAt: new Date(),  // تاریخ ثبت یادداشت
                 deadline: new Date(inputDeadline),
             };
             setTodos([...todos, newTodo]);
@@ -192,7 +192,8 @@ const TodoApp = () => {
                             <div className="flex justify-between">
                                 <div className="flex flex-col">
                                     <span className="font-bold">{todo.text}</span>
-                                    <span className="text-gray-500 mt-3">{todo.description}</span>
+                                    <span className="text-gray-500 mt-3 font-bold">{todo.description}</span>
+                                    <span className="text-gray-400 mt-3">Created At: {new Date(todo.createdAt).toLocaleDateString()}</span>
                                     <span className="text-gray-400 mt-3">Deadline: {new Date(todo.deadline).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex gap-x-2 mt-2">

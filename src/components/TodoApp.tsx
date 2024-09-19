@@ -9,9 +9,9 @@ import { useAutoAnimate } from '@formkit/auto-animate/react'
 const TodoApp = () => {
     const [animationParent] = useAutoAnimate()
     const [todos, setTodos] = useState([
-        { id: 1, text: "note 1", description: "description 1" },
-        { id: 2, text: "note 2", description: "description 2" },
-        { id: 3, text: "note 3", description: "description 3" },
+        { id: 1, text: "note 1", description: "description 1", date: new Date().toLocaleDateString() },
+        { id: 2, text: "note 2", description: "description 2", date: new Date().toLocaleDateString() },
+        { id: 3, text: "note 3", description: "description 3", date: new Date().toLocaleDateString() },
     ])
 
     const [inputText, setInputText] = useState("")
@@ -36,11 +36,12 @@ const TodoApp = () => {
             const newTodo = {
                 id: todos.length + 1,
                 text: inputText,
-                description: inputDescription, 
+                description: inputDescription,
+                date: new Date().toLocaleDateString()
             }
             setTodos([...todos, newTodo])
             setInputText("")
-            setInputDescription("") // خالی کردن فیلد توضیحات
+            setInputDescription("")
         }
     }
 
@@ -56,7 +57,7 @@ const TodoApp = () => {
         const todoToEdit = todos.find(todo => todo.id === id)
         if (todoToEdit) {
             setEditedText(todoToEdit.text)
-            setEditedDescription(todoToEdit.description) // تنظیم توضیحات ویرایش
+            setEditedDescription(todoToEdit.description)
         }
     }
 
@@ -135,6 +136,7 @@ const TodoApp = () => {
                                 <div className="flex flex-col">
                                    <span className="font-bold">{todo.text}</span>
                                    <span className="text-gray-500 mt-3">{todo.description}</span>
+                                   <span className="text-gray-400 mt-1 text-sm">Created on: {todo.date}</span>
                                 </div>
                                 <div className="flex gap-x-2 mt-2">
                                     <FaEdit 

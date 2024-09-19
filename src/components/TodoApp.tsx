@@ -5,8 +5,12 @@ import { FaEdit } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
 import swal from 'sweetalert'
 
+import { useAutoAnimate } from '@formkit/auto-animate/react'
+
 
 const TodoApp = () => {
+     
+    const [animationParent] = useAutoAnimate()
 
     const [todos, setTodos] = useState([
         { id: 1, text: "Notes 1" },
@@ -54,7 +58,7 @@ const TodoApp = () => {
                 <input value={inputText} onChange={(e)=>setInputText(e.target.value)} type="text" placeholder="Type here..." className="w-full border border-gray-300 rounded-l px-4 py-2" />
                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-r" onClick={AddTodo}>Add</button>
             </div>
-            <ul className="mt-7">
+            <ul className="mt-7" ref={animationParent}>
                 {todos.map(todo => (
                     <li key={todo.id} className="flex justify-between items-center border-b py-3">
 

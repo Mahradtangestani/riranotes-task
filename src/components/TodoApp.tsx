@@ -1,24 +1,24 @@
 "use client"
 
 import { useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import swal from 'sweetalert';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 
 const TodoApp = () => {
     const [animationParent] = useAutoAnimate();
     const [todos, setTodos] = useState([
-        { id: 1, text: "note 1", description: "description 1", date: new Date().toLocaleDateString() },
-        { id: 2, text: "note 2", description: "description 2", date: new Date().toLocaleDateString() },
-        { id: 3, text: "note 3", description: "description 3", date: new Date().toLocaleDateString() },
+        { id: 1, text: "note 1", description: "description 1", createdAt: new Date(), deadline: new Date(Date.now() + 86400000) }, // Example deadline: 1 day from now
     ]);
 
     const [inputText, setInputText] = useState("");
     const [inputDescription, setInputDescription] = useState("");
+    const [inputDeadline, setInputDeadline] = useState<string>("");
     const [editMode, setEditMode] = useState<number | null>(null);
     const [editedText, setEditedText] = useState("");
     const [editedDescription, setEditedDescription] = useState("");
-    const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
+    const [editedDeadline, setEditedDeadline] = useState<string>("");
 
     // Add Todo
     function AddTodo() {
@@ -37,34 +37,37 @@ const TodoApp = () => {
                 id: todos.length + 1,
                 text: inputText,
                 description: inputDescription,
-                date: new Date().toLocaleDateString(),
+                createdAt: new Date(),
+                deadline: new Date(inputDeadline),
             };
             setTodos([...todos, newTodo]);
             setInputText("");
             setInputDescription("");
+            setInputDeadline("");
         }
     }
 
     // Delete Todo
     function DeleteTodo(id: number) {
-        const updateTodo = todos.filter(todo => todo.id !== id);
-        setTodos(updateTodo);
+        const updatedTodos = todos.filter(todo => todo.id !== id);
+        setTodos(updatedTodos);
     }
 
-    // Edit Todo 
+    // Edit Todo
     function EditTodo(id: number) {
         setEditMode(id);
         const todoToEdit = todos.find(todo => todo.id === id);
         if (todoToEdit) {
             setEditedText(todoToEdit.text);
             setEditedDescription(todoToEdit.description);
+            setEditedDeadline(todoToEdit.deadline.toISOString().split('T')[0]);
         }
     }
 
     // Save Edited Todo
     function SaveEditedTodo() {
         const updatedTodos = todos.map(todo =>
-            todo.id === editMode ? { ...todo, text: editedText, description: editedDescription } : todo
+            todo.id === editMode ? { ...todo, text: editedText, description: editedDescription, deadline: new Date(editedDeadline) } : todo
         );
         setTodos(updatedTodos);
         swal({
@@ -75,29 +78,39 @@ const TodoApp = () => {
         setEditMode(null);
     }
 
-    // Handle Drag Start
-    function handleDragStart(id: number) {
-        setDraggedItemId(id);
+    // Function to determine background color based on deadline
+    function getBackgroundColor(todo) {
+        const currentTime = new Date().getTime();
+        const deadlineTime = new Date(todo.deadline).getTime();
+        const timeDifference = deadlineTime - currentTime;
+
+        if (timeDifference < 0) {
+            return "bg-red-100"; // Past deadline
+        } else if (timeDifference < 86400000) { // Less than 1 day remaining
+            return "bg-yellow-100";
+        } else {
+            return "bg-green-100";
+        }
     }
 
-    // Handle Drag Over
-    function handleDragOver(event: React.DragEvent<HTMLLIElement>) {
-        event.preventDefault();
+    // Drag and Drop Handlers
+    function handleDragStart(e: React.DragEvent<HTMLLIElement>, index: number) {
+        e.dataTransfer.setData('text/plain', index.toString());
     }
 
-    // Handle Drop
-    function handleDrop(id: number) {
-        if (draggedItemId === null) return;
-        
-        const draggedIndex = todos.findIndex(todo => todo.id === draggedItemId);
-        const targetIndex = todos.findIndex(todo => todo.id === id);
+    function handleDrop(e: React.DragEvent<HTMLLIElement>, index: number) {
+        e.preventDefault();
+        const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (draggedIndex === index) return;
 
-        const updatedTodos = [...todos];
-        const [draggedItem] = updatedTodos.splice(draggedIndex, 1);
-        updatedTodos.splice(targetIndex, 0, draggedItem);
+        const reorderedTodos = [...todos];
+        const [movedTodo] = reorderedTodos.splice(draggedIndex, 1);
+        reorderedTodos.splice(index, 0, movedTodo);
+        setTodos(reorderedTodos);
+    }
 
-        setTodos(updatedTodos);
-        setDraggedItemId(null);
+    function handleDragOver(e: React.DragEvent<HTMLLIElement>) {
+        e.preventDefault();
     }
 
     return (
@@ -119,6 +132,12 @@ const TodoApp = () => {
                         placeholder="Description..."
                         className="w-full border border-gray-300 px-4 py-2 rounded-l bg-slate-300 shadow-lg"
                     />
+                    <input
+                        value={inputDeadline}
+                        onChange={(e) => setInputDeadline(e.target.value)}
+                        type="date"
+                        className="w-full border border-gray-300 px-4 py-2 rounded-l bg-slate-300 shadow-lg mt-2"
+                    />
                 </div>
                 <button
                     type="submit"
@@ -129,14 +148,14 @@ const TodoApp = () => {
                 </button>
             </div>
             <ul className="mt-7" ref={animationParent}>
-                {todos.map((todo) => (
+                {todos.map((todo, index) => (
                     <li
                         key={todo.id}
-                        className="flex flex-col border-b py-3 cursor-grab"
+                        className={`flex flex-col border-b py-3 p-4 ${getBackgroundColor(todo)}`}
                         draggable
-                        onDragStart={() => handleDragStart(todo.id)}
+                        onDragStart={(e) => handleDragStart(e, index)}
                         onDragOver={handleDragOver}
-                        onDrop={() => handleDrop(todo.id)}
+                        onDrop={(e) => handleDrop(e, index)}
                     >
                         {editMode === todo.id ? (
                             <div className="flex justify-between">
@@ -155,6 +174,12 @@ const TodoApp = () => {
                                         placeholder="Description..."
                                         className="w-full border border-gray-300 px-4 py-2 mb-2 rounded-l bg-slate-300 shadow-lg"
                                     />
+                                    <input
+                                        value={editedDeadline}
+                                        onChange={(e) => setEditedDeadline(e.target.value)}
+                                        type="date"
+                                        className="w-full border border-gray-300 px-4 py-2 mb-2 rounded-l bg-slate-300 shadow-lg"
+                                    />
                                 </div>
                                 <button
                                     className="bg-green-500 text-white h-10 px-4 py-2 rounded-r"
@@ -168,7 +193,7 @@ const TodoApp = () => {
                                 <div className="flex flex-col">
                                     <span className="font-bold">{todo.text}</span>
                                     <span className="text-gray-500 mt-3">{todo.description}</span>
-                                    <span className="text-gray-400 mt-1 text-sm">Created on: {todo.date}</span>
+                                    <span className="text-gray-400 mt-3">Deadline: {new Date(todo.deadline).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex gap-x-2 mt-2">
                                     <FaEdit
@@ -187,6 +212,25 @@ const TodoApp = () => {
                     </li>
                 ))}
             </ul>
+
+            {/* Description colors */}
+            <div className="mt-28 flex flex-col gap-4">
+                <div className="flex items-center gap-x-4">
+                    <div className="h-4 w-4 rounded-full bg-yellow-400">
+                    </div>
+                    <p>Less than 1 day remaining</p>
+                </div>
+                <div className="flex items-center gap-x-4">
+                    <div className="h-4 w-4 rounded-full bg-red-400">
+                    </div>
+                    <p>Past deadline</p>
+                </div>
+                <div className="flex items-center gap-x-4">
+                    <div className="h-4 w-4 rounded-full bg-green-400">
+                    </div>
+                    <p>You have time</p>
+                </div>
+            </div>
         </div>
     );
 };

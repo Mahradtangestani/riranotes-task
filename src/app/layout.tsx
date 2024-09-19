@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Head from "next/head";
 
 
 
@@ -15,8 +16,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <Head>
+        <script
+          src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"
+          async
+        ></script>
+      </Head>
       <body>
         {children}
+
       </body>
     </html>
   );
